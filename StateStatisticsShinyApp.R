@@ -151,7 +151,6 @@ server <- function(input,output){
     
   })
   
-  #USdata %>% arrange(desc(rt[input$s1]))
 }
 
 shinyApp(ui=ui,server=server)
