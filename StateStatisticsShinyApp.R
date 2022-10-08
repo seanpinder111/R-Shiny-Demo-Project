@@ -2,10 +2,6 @@ library(shiny)
 library(shinyWidgets)
 
 
-#######
-#Shiny App
-#######
-
 ui <- fluidPage(
     titlePanel("U.S. Data by State"),
     fluidRow(
@@ -57,10 +53,10 @@ server <- function(input,output){
   library(maps)
   library(lubridate)
   
-  #######
-  #Loading in Crime data
-  #######
-  
+
+
+
+  #Loading in built in crime data from R
   #Crime data in the U.S. by State (in units of 100,000)
   crimedata <- USArrests  %>% 
     mutate(State = state.abb) %>% 
@@ -79,6 +75,8 @@ server <- function(input,output){
   mdata <- mdata %>% 
     left_join(USdata, by = c("region"="State"))
   
+  
+  #Data frame for matching each type of statistic (Murder, Life Expectancy, etc.) to a unique color
   color_table <- data.frame(
     Type = c("Murder", "Assault", "Rape", "Population", 
              "Income", "Illiteracy", "Life Exp",
@@ -88,39 +86,21 @@ server <- function(input,output){
   
   color_vector <- as.vector(unlist(color_table[1]))
   
+  #color will change each time a new type of statistic is selected in app
   color_match_1 <- reactive({
     color_table$Color[match(input$s1, color_vector)]
   })
   
+  #color will change each time a new type of statistic is selected in app
   color_match_2 <- reactive({
     color_table$Color[match(input$s2, color_vector)]
   })
   
-  
-  rt <- list("Murder"= USdata$Murder, "Assault" = USdata$Assault, "Rape" = USdata$Rape)
-  
-   fill_1  <- reactive({
-     as.numeric(unlist(mdata %>% select(toString(input$s1))))
-   })
-   
-   fill_2  <- reactive({
-     as.numeric(unlist(mdata %>% select(toString(input$s2))))
-   })
-  
-   bar_1 <- reactive({
-     as.numeric(unlist(USdata %>% select(toString(input$s1)))) %>% sort(decreasing = TRUE)
-   })
-  
-   bar_2 <- reactive({
-     as.numeric(unlist(USdata %>% select(toString(input$s2)))) %>% sort(decreasing = TRUE)
-   })
-   
-
  
   
   output$map1 <- renderPlot({
     ggplot(mdata, aes(x = long, y = lat, group=group)) +
-      geom_polygon(color = "grey", aes(fill= fill_1())) +
+      geom_polygon(color = "grey", aes(fill= !!as.name(input$s1))) +
       scale_fill_gradientn(colours = c("oldlace",color_match_1())) +
       labs(fill = input$s1) +
       theme_classic() +
@@ -129,7 +109,7 @@ server <- function(input,output){
   })
   output$map2 <- renderPlot({
     ggplot(mdata, aes(x = long, y = lat, group=group)) +
-      geom_polygon(color = "grey", aes(fill= fill_2())) +
+      geom_polygon(color = "grey", aes(fill= !!as.name(input$s2))) +
       scale_fill_gradientn(colours = c("oldlace",color_match_2())) +
       labs(fill = input$s2) +
       theme_classic()  +
